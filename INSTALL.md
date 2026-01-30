@@ -108,3 +108,37 @@ sudo apt install apache2 mysql-server php php-mysql php-cli libapache2-mod-php u
 
 ## Step 6: Access the Panel
 Open your browser and navigate to `http://your-domain.com` (or your VPS IP). You should see the login page.
+
+---
+
+## Updating the Panel
+
+When you push new code to GitHub, update your VPS:
+
+### Method 1: Using update.sh (Recommended)
+```bash
+cd /var/www/html/vps-panel
+sudo ./update.sh
+```
+
+### Method 2: Manual Update
+```bash
+cd /var/www/html/vps-panel
+sudo git pull origin main
+sudo chown -R www-data:www-data .
+sudo chmod -R 755 .
+sudo systemctl restart apache2
+```
+
+### Running Migrations
+If there are new database migrations:
+```bash
+mysql -u panel_user -p vps_panel < migrate_admin.sql
+```
+
+### Creating Admin Users
+```bash
+cd /var/www/html/vps-panel
+php make-user.php
+```
+
