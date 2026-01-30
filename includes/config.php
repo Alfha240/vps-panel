@@ -9,7 +9,7 @@
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'vps_panel');
 define('DB_USER', 'vps_user');
-define('DB_PASS', 'your_secure_password_here');
+define('DB_PASS', 'lordcloud');  // Change this to your actual password
 define('DB_CHARSET', 'utf8mb4');
 
 // Application Settings
