@@ -7,7 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
+# Install dependencies and OpenSSL for Prisma
+RUN apk add --no-cache openssl
 RUN npm install
 
 # Copy source code
@@ -26,6 +27,9 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 # Install production dependencies only
 RUN npm install --only=production
