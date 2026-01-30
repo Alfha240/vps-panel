@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %> - VPS Control Panel
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+</head>
+
+<body>
+    <%- include('../components/sidebar') %>
+
+        <div class="main-content">
+            <%- include('../components/header') %>
+
+                <div class="content-wrapper">
+                    <div class="page-header">
+                        <h1 class="page-title">
+                            <%= title %>
+                        </h1>
+                        <p class="page-subtitle">System Overview and Statistics</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Users</div>
+                            <div class="stat-value">
+                                <%= stats.totalUsers %>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-label">Total Nodes</div>
+                            <div class="stat-value">
+                                <%= stats.totalNodes %>
+                            </div>
+                            <div class="stat-change positive">
+                                <%= stats.healthyNodes %>/<%= stats.totalNodes %> healthy
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-label">Total Servers</div>
+                            <div class="stat-value">
+                                <%= stats.totalServers %>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-label">IP Addresses</div>
+                            <div class="stat-value">
+                                <%= stats.assignedIPs %>
+                            </div>
+                            <div class="stat-change">
+                                <%= stats.availableIPs %> available
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.125rem;">Recent Servers</h3>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>User</th>
+                                        <th>Node</th>
+                                        <th>Plan</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (recentServers.length===0) { %>
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">No servers yet</td>
+                                        </tr>
+                                        <% } else { %>
+                                            <% recentServers.forEach(server=> { %>
+                                                <tr>
+                                                    <td><strong>
+                                                            <%= server.name %>
+                                                        </strong></td>
+                                                    <td>
+                                                        <%= server.user.name %>
+                                                    </td>
+                                                    <td>
+                                                        <%= server.node.name %>
+                                                    </td>
+                                                    <td>
+                                                        <%= server.plan.name %>
+                                                    </td>
+                                                    <td>
+                                                        <% if (server.status==='active' ) { %>
+                                                            <span class="badge badge-success">Active</span>
+                                                            <% } else if (server.status==='suspended' ) { %>
+                                                                <span class="badge badge-error">Suspended</span>
+                                                                <% } else { %>
+                                                                    <span class="badge badge-info">
+                                                                        <%= server.status %>
+                                                                    </span>
+                                                                    <% } %>
+                                                    </td>
+                                                    <td class="text-muted">
+                                                        <%= new Date(server.created_at).toLocaleDateString() %>
+                                                    </td>
+                                                </tr>
+                                                <% }) %>
+                                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+        </div>
+</body>
+
+</html>

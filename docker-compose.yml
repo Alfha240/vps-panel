@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: vps-panel-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-vps_root_password}
+      MYSQL_DATABASE: ${DB_NAME:-vps_panel}
+      MYSQL_USER: ${DB_USER:-vps_panel}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-vps_panel_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - vps-panel-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-vps_root_password}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for session storage
+  redis:
+    image: redis:7-alpine
+    container_name: vps-panel-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vps-panel-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # VPS Panel Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vps-panel-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mysql://${DB_USER:-vps_panel}:${DB_PASSWORD:-vps_panel_password}@db:3306/${DB_NAME:-vps_panel}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - vps-panel-network
+    command: >
+      sh -c "npx prisma migrate deploy &&
+             node dist/index.js"
+
+volumes:
+  mysql_data:
+  redis_data:
+
+
+networks:
+  vps-panel-network:
+    driver: bridge
