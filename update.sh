@@ -1,34 +1,34 @@
 #!/bin/bash
-# VPS Panel Update Script
-# Run this after pushing code to GitHub
+# VPS Panel - Smart Update Script
+# Handles Git conflicts automatically and updates everything
 
-echo "🚀 Updating VPS Panel..."
+echo "🚀 Starting VPS Panel Update..."
 
 # Navigate to project directory
-cd /var/www/html/vps-panel
+cd /var/www/html/vps-panel || exit 1
 
-# Force reset to match GitHub (discard local changes)
-echo "📦 Resetting to GitHub version..."
+# Backup current config.php
+echo "💾 Backing up config.php..."
+cp config.php config.php.backup
+
+# Stash any local changes
+echo "📦 Stashing local changes..."
+git stash
+
+# Fetch latest code
+echo "📥 Fetching latest code from GitHub..."
 git fetch origin
+
+# Force reset to latest version
+echo "🔄 Resetting to latest version..."
 git reset --hard origin/main
+
+# Clean untracked files
 git clean -fd
 
-# Run new migrations
-echo "🗄️  Running database migrations..."
-chmod +x run-migrations.sh
-
-# Check if migrations exist
-if [ -f "run-migrations.sh" ]; then
-    ./run-migrations.sh
-else
-    echo "⚠️  Migration script not found, running migrations manually..."
-    for file in migrations/*.sql; do
-        if [ -f "$file" ]; then
-            echo "Running: $file"
-            mysql -u panel_user -plordcloud vps_panel < "$file" 2>/dev/null || echo "Skipping $file (already applied or error)"
-        fi
-    done
-fi
+# Restore config with correct password
+echo "⚙️  Restoring database configuration..."
+sed -i "s/define('DB_PASSWORD', '');/define('DB_PASSWORD', 'lordcloud');/" config.php
 
 # Set correct permissions
 echo "🔒 Setting permissions..."
@@ -36,10 +36,32 @@ chown -R www-data:www-data .
 chmod -R 755 .
 chmod +x *.sh 2>/dev/null
 
-# Restart web server
+# Run migrations
+echo "📊 Running database migrations..."
+if [ -f "run-migrations.sh" ]; then
+    chmod +x run-migrations.sh
+    ./run-migrations.sh
+fi
+
+# Restart Nginx
 echo "🔄 Restarting Nginx..."
 systemctl restart nginx
 
+# Check Nginx status
+if systemctl is-active --quiet nginx; then
+    echo ""
+    echo "✅ Update completed successfully!"
+    echo "🌐 Panel URL: http://$(hostname -I | awk '{print $1}')"
+else
+    echo ""
+    echo "⚠️  Warning: Nginx failed to restart!"
+    echo "Run: sudo systemctl status nginx"
+fi
+
 echo ""
-echo "✅ Update completed successfully!"
-echo "🌐 Panel URL: http://$(hostname -I | awk '{print $1}')"
+echo "📝 Update Summary:"
+echo "- Code updated from GitHub"
+echo "- Database migrations applied"
+echo "- Permissions fixed"
+echo "- Nginx restarted"
+echo ""
