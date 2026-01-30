@@ -33,9 +33,16 @@ mysql -u root -e "FLUSH PRIVILEGES;"
 # Assuming script is run from inside the cloned repo
 if [ -f "database.sql" ]; then
     mysql -u root vps_panel < database.sql
+    echo -e "${GREEN}Database schema imported successfully!${NC}"
 else
     echo "database.sql not found! Please run this script from inside the repository folder."
     exit 1
+fi
+
+# Import admin migration
+if [ -f "migrate_admin.sql" ]; then
+    mysql -u root vps_panel < migrate_admin.sql
+    echo -e "${GREEN}Admin migration completed!${NC}"
 fi
 
 # 4. Setup Web Files
@@ -55,6 +62,13 @@ sed -i "s/define('DB_USERNAME', 'root');/define('DB_USERNAME', 'panel_user');/" 
 # Set Permissions
 chown -R www-data:www-data $TARGET_DIR
 chmod -R 755 $TARGET_DIR
+
+# Set executable permissions for scripts
+chmod +x $TARGET_DIR/install.sh
+chmod +x $TARGET_DIR/update.sh
+chmod +x $TARGET_DIR/make-user.php
+chmod 644 $TARGET_DIR/*.php
+chmod +x $TARGET_DIR/make-user.php
 
 # 5. Configure Apache
 echo -e "${GREEN}Configuring Apache...${NC}"
@@ -82,3 +96,7 @@ systemctl restart apache2
 
 echo -e "${GREEN}Installation Complete!${NC}"
 echo -e "You can access your panel at: http://$DOMAIN_NAME"
+echo ""
+echo -e "${GREEN}Next Steps:${NC}"
+echo "1. Create an admin user: cd $TARGET_DIR && php make-user.php"
+echo "2. Login at: http://$DOMAIN_NAME"
