@@ -6,8 +6,8 @@
  * or you will configure these on your VPS.
  */
 define('DB_SERVER', 'localhost');
-define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
+define('DB_USERNAME', 'panel_user');
+define('DB_PASSWORD', 'lordcloud');
 define('DB_NAME', 'vps_panel');
  
 /* Attempt to connect to MySQL database */
