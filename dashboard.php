@@ -25,6 +25,9 @@ if(!isset($_SESSION["loggedin"]) || $_SESSION["loggedin"] !== true){
     <div class="wrapper">
         <h1 class="text-center">Hi, <b><?php echo htmlspecialchars($_SESSION["username"]); ?></b>. Welcome to your Dashboard.</h1>
         <p class="text-center">
+            <?php if(isset($_SESSION["is_admin"]) && $_SESSION["is_admin"] == 1): ?>
+                <a href="admin.php" class="btn btn-primary">Admin Panel</a>
+            <?php endif; ?>
             <a href="logout.php" class="btn btn-danger">Sign Out of Your Account</a>
         </p>
 

@@ -26,7 +26,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     }
     
     if(empty($username_err) && empty($password_err)){
-        $sql = "SELECT id, username, password FROM users WHERE username = :username";
+        $sql = "SELECT id, username, password, is_admin FROM users WHERE username = :username";
         
         if($stmt = $pdo->prepare($sql)){
             $stmt->bindParam(":username", $param_username, PDO::PARAM_STR);
@@ -38,6 +38,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                         $id = $row["id"];
                         $username = $row["username"];
                         $hashed_password = $row["password"];
+                        $is_admin = $row["is_admin"];
                         if(password_verify($password, $hashed_password)){
                             // Password is correct, so start a new session
                             if (session_status() === PHP_SESSION_NONE) {
@@ -47,7 +48,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                             // Store data in session variables
                             $_SESSION["loggedin"] = true;
                             $_SESSION["id"] = $id;
-                            $_SESSION["username"] = $username;                            
+                            $_SESSION["username"] = $username;
+                            $_SESSION["is_admin"] = $is_admin;
                             
                             // Redirect user to welcome page
                             header("location: dashboard.php");
