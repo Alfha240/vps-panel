@@ -70,7 +70,7 @@ export const updatePlan = async (req: Request, res: Response) => {
             req.body;
 
         await prisma.plan.update({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
             data: {
                 name,
                 description,
@@ -99,7 +99,7 @@ export const deletePlan = async (req: Request, res: Response) => {
 
         // Check if plan has active servers
         const serverCount = await prisma.server.count({
-            where: { plan_id: parseInt(id) },
+            where: { plan_id: parseInt(id as string) },
         });
 
         if (serverCount > 0) {
@@ -107,7 +107,7 @@ export const deletePlan = async (req: Request, res: Response) => {
         }
 
         await prisma.plan.delete({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
         });
 
         res.redirect('/admin/plans?success=deleted');

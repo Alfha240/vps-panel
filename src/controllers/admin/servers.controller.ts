@@ -73,7 +73,7 @@ export const suspendServer = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         await prisma.server.update({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
             data: { status: 'suspended' },
         });
 
@@ -92,7 +92,7 @@ export const unsuspendServer = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         await prisma.server.update({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
             data: { status: 'active' },
         });
 
@@ -110,7 +110,7 @@ export const deleteServer = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        await deleteServerService(parseInt(id));
+        await deleteServerService(parseInt(id as string));
 
         res.redirect('/admin/servers?success=deleted');
     } catch (error) {

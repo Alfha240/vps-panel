@@ -69,7 +69,7 @@ export const updateLocation = async (req: Request, res: Response) => {
         const { name, description, country, city } = req.body;
 
         await prisma.location.update({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
             data: { name, description, country, city },
         });
 
@@ -89,7 +89,7 @@ export const deleteLocation = async (req: Request, res: Response) => {
 
         // Check if location has nodes
         const nodeCount = await prisma.node.count({
-            where: { location_id: parseInt(id) },
+            where: { location_id: parseInt(id as string) },
         });
 
         if (nodeCount > 0) {
@@ -97,7 +97,7 @@ export const deleteLocation = async (req: Request, res: Response) => {
         }
 
         await prisma.location.delete({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
         });
 
         res.redirect('/admin/locations?success=deleted');

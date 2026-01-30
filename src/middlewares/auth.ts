@@ -83,6 +83,7 @@ export const requireApiToken = async (req: Request, res: Response, next: NextFun
         };
 
         next();
+        return;
     } catch (error) {
         console.error('API token verification error:', error);
         return res.status(401).json({ error: 'Invalid token' });
@@ -111,5 +112,6 @@ export const checkPermissions = (requiredPermissions: string[]) => {
         }
 
         next();
+        return;
     };
 };

@@ -41,7 +41,7 @@ export const viewServer = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         const server = await prisma.server.findFirst({
-            where: { id: parseInt(id), user_id: userId },
+            where: { id: parseInt(id as string), user_id: userId },
             include: {
                 node: {
                     include: {
@@ -98,7 +98,7 @@ export const controlPower = async (req: Request, res: Response) => {
 
         // Verify server ownership
         const server = await prisma.server.findFirst({
-            where: { id: parseInt(id), user_id: userId },
+            where: { id: parseInt(id as string), user_id: userId },
             include: { node: true },
         });
 

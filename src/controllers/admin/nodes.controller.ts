@@ -172,7 +172,7 @@ export const updateNode = async (req: Request, res: Response) => {
         }
 
         await prisma.node.update({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
             data: updateData,
         });
 
@@ -192,7 +192,7 @@ export const deleteNode = async (req: Request, res: Response) => {
 
         // Check if node has servers
         const serverCount = await prisma.server.count({
-            where: { node_id: parseInt(id) },
+            where: { node_id: parseInt(id as string) },
         });
 
         if (serverCount > 0) {
@@ -200,7 +200,7 @@ export const deleteNode = async (req: Request, res: Response) => {
         }
 
         await prisma.node.delete({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
         });
 
         res.redirect('/admin/nodes?success=deleted');

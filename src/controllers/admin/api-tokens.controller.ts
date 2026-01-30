@@ -106,7 +106,7 @@ export const revokeAPIToken = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         await prisma.apiToken.update({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
             data: { is_active: false },
         });
 
@@ -125,7 +125,7 @@ export const deleteAPIToken = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         await prisma.apiToken.delete({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
         });
 
         res.redirect('/admin/api-tokens?success=deleted');

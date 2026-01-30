@@ -107,7 +107,7 @@ export const apiControlPower = async (req: Request, res: Response) => {
         }
 
         const server = await prisma.server.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
             include: { node: true },
         });
 
@@ -157,7 +157,8 @@ export const apiDeleteServer = async (req: Request, res: Response) => {
         const { id } = req.params;
 
         const server = await prisma.server.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
+            include: { node: true }, // Include node for createProxmoxClient if needed, or remove lines requiring it
         });
 
         if (!server) {
@@ -166,7 +167,9 @@ export const apiDeleteServer = async (req: Request, res: Response) => {
 
         // Use deployment service to delete
         const { deleteServer } = await import('../../services/deployment.service');
-        await deleteServer(parseInt(id));
+        // Use deployment service to delete
+        const { deleteServer } = await import('../../services/deployment.service');
+        await deleteServer(parseInt(id as string));
 
         res.json({
             success: true,

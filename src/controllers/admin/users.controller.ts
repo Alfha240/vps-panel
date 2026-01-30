@@ -68,7 +68,7 @@ export const toggleAdmin = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const userId = parseInt(id);
+        const userId = parseInt(id as string);
 
         // Don't allow deleting own account
         if (req.session.user?.id === userId) {

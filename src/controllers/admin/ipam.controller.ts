@@ -131,7 +131,7 @@ export const deleteIPPool = async (req: Request, res: Response) => {
 
         // Check if any IPs are assigned
         const assignedCount = await prisma.ipAddress.count({
-            where: { ip_pool_id: parseInt(id), is_assigned: true },
+            where: { ip_pool_id: parseInt(id as string), is_assigned: true },
         });
 
         if (assignedCount > 0) {
@@ -140,7 +140,7 @@ export const deleteIPPool = async (req: Request, res: Response) => {
 
         // Delete pool (cascade will delete IP addresses)
         await prisma.ipPool.delete({
-            where: { id: parseInt(id) },
+            where: { id: parseInt(id as string) },
         });
 
         res.redirect('/admin/ipam?success=deleted');
@@ -158,7 +158,7 @@ export const viewIPAddresses = async (req: Request, res: Response) => {
         const { poolId } = req.params;
 
         const ipPool = await prisma.ipPool.findUnique({
-            where: { id: parseInt(poolId) },
+            where: { id: parseInt(poolId as string) },
             include: {
                 location: true,
                 ip_addresses: {
