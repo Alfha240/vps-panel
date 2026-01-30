@@ -33,7 +33,7 @@ function getNodeById($id) {
 function getAvailableIP($subnet_id = null) {
     global $pdo;
     
-    $sql = "SELECT ip_address FROM ip_pools WHERE is_assigned = 0";
+    $sql = "SELECT ip_address FROM ip_addresses WHERE is_assigned = 0";
     if ($subnet_id) {
         $sql .= " AND subnet_id = :subnet_id";
     }
@@ -58,7 +58,7 @@ function getAvailableIP($subnet_id = null) {
  */
 function assignIP($ip, $vps_id) {
     global $pdo;
-    $stmt = $pdo->prepare("UPDATE ip_pools SET is_assigned = 1, assigned_to_vps = :vps_id WHERE ip_address = :ip");
+    $stmt = $pdo->prepare("UPDATE ip_addresses SET is_assigned = 1, assigned_to_vps = :vps_id WHERE ip_address = :ip");
     return $stmt->execute([':vps_id' => $vps_id, ':ip' => $ip]);
 }
 
@@ -69,7 +69,7 @@ function assignIP($ip, $vps_id) {
  */
 function releaseIP($ip) {
     global $pdo;
-    $stmt = $pdo->prepare("UPDATE ip_pools SET is_assigned = 0, assigned_to_vps = NULL WHERE ip_address = :ip");
+    $stmt = $pdo->prepare("UPDATE ip_addresses SET is_assigned = 0, assigned_to_vps = NULL WHERE ip_address = :ip");
     return $stmt->execute([':ip' => $ip]);
 }
 
@@ -112,7 +112,7 @@ function getUserVPS($user_id) {
     global $pdo;
     $stmt = $pdo->prepare("
         SELECT v.*, p.name as plan_name, n.name as node_name 
-        FROM vps_instances v
+        FROM servers v
         LEFT JOIN plans p ON v.plan_id = p.id
         LEFT JOIN nodes n ON v.node_id = n.id
         WHERE v.user_id = :user_id AND v.status != 'deleted'
@@ -132,7 +132,7 @@ function getVPSById($id, $user_id = null) {
     global $pdo;
     
     $sql = "SELECT v.*, p.name as plan_name, n.name as node_name, n.host as node_host 
-            FROM vps_instances v
+            FROM servers v
             LEFT JOIN plans p ON v.plan_id = p.id
             LEFT JOIN nodes n ON v.node_id = n.id
             WHERE v.id = :id";
@@ -149,6 +149,36 @@ function getVPSById($id, $user_id = null) {
     
     $stmt->execute($params);
     return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Get node by ID
+ * @param int $id Node ID
+ * @return array|false Node data
+ */
+function getNodeById($id) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM nodes WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Get all active nodes
+ * @return array List of nodes
+ */
+function getActiveNodes() {
+    global $pdo;
+    return $pdo->query("SELECT * FROM nodes WHERE is_active = 1 ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Get all plans
+ * @return array List of plans
+ */
+function getAllPlans() {
+    global $pdo;
+    return $pdo->query("SELECT * FROM plans ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 }
 
 /**
