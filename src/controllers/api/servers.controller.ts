@@ -167,8 +167,7 @@ export const apiDeleteServer = async (req: Request, res: Response) => {
 
         // Use deployment service to delete
         const { deleteServer } = await import('../../services/deployment.service');
-        // Use deployment service to delete
-        const { deleteServer } = await import('../../services/deployment.service');
+
         await deleteServer(parseInt(id as string));
 
         res.json({

@@ -278,7 +278,7 @@ class ProxmoxService {
     /**
      * Get next available VM ID
      */
-    async getNextVMID(nodeName: string): Promise<number> {
+    async getNextVMID(_nodeName: string): Promise<number> {
         await this.ensureAuthenticated();
 
         try {
