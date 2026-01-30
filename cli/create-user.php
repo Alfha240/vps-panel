@@ -1,3 +1,4 @@
+<?php
 /**
  * CLI Admin User Creation Script
  * Usage: php cli/create-user.php
