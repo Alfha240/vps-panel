@@ -1,39 +1,35 @@
 #!/bin/bash
+# VPS Panel Update Script
+# Run this after pushing code to GitHub
 
-# update.sh - Update VPS Panel on server
-# Usage: sudo ./update.sh
+echo "🚀 Updating VPS Panel..."
 
-# Exit on error
-set -e
+# Navigate to project directory
+cd /var/www/html/vps-panel
 
-# Colors
-GREEN='\033[0;32m'
-NC='\033[0m'
+# Stash any local changes
+echo "📦 Stashing local changes..."
+git stash
 
-echo -e "${GREEN}Updating VPS Panel...${NC}"
-
-# Pull latest changes from GitHub
-echo -e "${GREEN}Pulling latest code from GitHub...${NC}"
+# Pull latest code from GitHub
+echo "⬇️  Pulling latest code..."
 git pull origin main
 
-# Set permissions
-echo -e "${GREEN}Setting permissions...${NC}"
+# Run new migrations
+echo "🗄️  Running database migrations..."
+chmod +x run-migrations.sh
+./run-migrations.sh
+
+# Set correct permissions
+echo "🔒 Setting permissions..."
 chown -R www-data:www-data .
 chmod -R 755 .
+chmod +x *.sh
 
-# Check if migration file exists and hasn't been run
-if [ -f "migrate_admin.sql" ]; then
-    read -p "Run database migration (migrate_admin.sql)? (y/n): " RUN_MIGRATION
-    if [ "$RUN_MIGRATION" = "y" ] || [ "$RUN_MIGRATION" = "Y" ]; then
-        read -sp "Enter database password: " DB_PASS
-        echo ""
-        mysql -u panel_user -p"$DB_PASS" vps_panel < migrate_admin.sql
-        echo -e "${GREEN}Migration completed!${NC}"
-    fi
-fi
+# Restart web server
+echo "🔄 Restarting Nginx..."
+systemctl restart nginx
 
-# Restart Apache
-echo -e "${GREEN}Restarting Apache...${NC}"
-systemctl restart apache2
-
-echo -e "${GREEN}Update Complete!${NC}"
+echo ""
+echo "✅ Update completed successfully!"
+echo "🌐 Panel URL: http://$(hostname -I | awk '{print $1}')"
