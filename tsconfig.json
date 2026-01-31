@@ -1,39 +1,40 @@
 {
     "compilerOptions": {
-        "target": "ES2022",
-        "module": "commonjs",
+        "target": "ES2020",
         "lib": [
-            "ES2022"
+            "dom",
+            "dom.iterable",
+            "esnext"
         ],
-        "outDir": "./dist",
-        "strict": true,
-        "esModuleInterop": true,
+        "allowJs": true,
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
         "resolveJsonModule": true,
-        "moduleResolution": "node",
-        "sourceMap": true,
-        "declaration": true,
-        "declarationMap": true,
-        "removeComments": true,
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "noImplicitReturns": false,
-        "noFallthroughCasesInSwitch": true,
-        "allowSyntheticDefaultImports": true,
-        "types": [
-            "node"
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
+        "plugins": [
+            {
+                "name": "next"
+            }
         ],
-        "typeRoots": [
-            "./node_modules/@types"
-        ]
+        "paths": {
+            "@/*": [
+                "./*"
+            ]
+        }
     },
     "include": [
-        "src/**/*",
-        "scripts/**/*"
+        "next-env.d.ts",
+        "**/*.ts",
+        "**/*.tsx",
+        ".next/types/**/*.ts"
     ],
     "exclude": [
-        "node_modules",
-        "dist"
+        "node_modules"
     ]
 }

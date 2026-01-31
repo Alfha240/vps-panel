@@ -1,32 +1,37 @@
-# Dependencies
-node_modules/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# Build output
-dist/
+# testing
+/coverage
 
-# Environment variables
-.env
-.env.local
-.env.production
+# next.js
+/.next/
+/out/
 
-# Logs
-logs/
-*.log
-npm-debug.log*
+# production
+/build
 
-# OS files
+# misc
 .DS_Store
-Thumbs.db
+*.pem
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Testing
-coverage/
+# local env files
+.env
+.env*.local
 
-# Temporary files
-*.tmp
-temp/
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma
+prisma/migrations

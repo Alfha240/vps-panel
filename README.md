@@ -1,267 +1,296 @@
-# VPS Control Panel
+# VPS Hosting Control Panel
 
-A professional, production-ready VPS hosting control panel built with Node.js, Express, TypeScript, MySQL, and Docker. Features Proxmox integration, role-based access control, IPAM system, and external API support.
+A professional, production-grade VPS hosting control panel built with Next.js 14, TypeScript, and Prisma.
 
-## 🚀 Features
+## Features
 
-### Core Functionality
-- **Single Login System**: Unified login for admins and users with role-based access control
-- **Proxmox Integration**: Full VM lifecycle management (create, start, stop, restart, delete)
-- **IP Address Management (IPAM)**: Automatic IP pool management with CIDR support
-- **RESTful API**: External API with JWT authentication for WHMCS/automation integrations
-- **Modern UI**: Professional dark theme with glassmorphism design
+- ✅ **Single Login System** - Both admins and users use the same login page
+- ✅ **Role-Based Access Control** - Automatic routing based on user role
+- ✅ **Admin Panel** - Complete infrastructure management
+  - Locations management
+  - Node management with encrypted credentials
+  - VPS plans with pricing
+  - Server oversight and control
+  - IP Address Management (IPAM)
+  - User management
+  - API token system
+- ✅ **User Panel** - Self-service VPS management
+  - Personal dashboard
+  - VPS list and details
+  - Power control (start, stop, restart)
+- ✅ **API System** - Token-based external API access
+- ✅ **Premium Dark UI** - Modern, professional interface
+- ✅ **Security** - Encrypted credentials, role protection, input validation
 
-### Admin Panel
-- 📊 **Dashboard**: System statistics and recent activity
-- 📍 **Locations**: Manage data center locations
-- 🖥️ **Nodes**: Proxmox node management with live stats
-- 💻 **Servers**: Server management (list, suspend, delete)
-- 🌐 **IPAM**: IP pool and address management
-- 👥 **Users**: User management and role assignment
-- 🔑 **API Tokens**: Generate permission-based API tokens
-- 📦 **Plans**: VPS plan management
+## Tech Stack
 
-### User Panel
-- 📊 **Dashboard**: Personal server overview
-- 💻 **My Servers**: Server list with management controls
-- ⚡ **Server Control**: Power on/off/restart functionality
-- 👤 **Profile**: Account and password management
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js v5
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
 
-## 📋 Prerequisites
+## Prerequisites
 
-- **Node.js** 18+ 
-- **Docker** and **Docker Compose**
-- **Proxmox VE** server(s)
+- Node.js 18+ 
+- PostgreSQL database
+- npm or yarn
 
-## ⚡ Quick Start
+## Installation
 
 ### 1. Clone the Repository
 
-```bash
+\`\`\`bash
 git clone <repository-url>
 cd vps-panel
-```
+\`\`\`
 
-### 2. Configure Environment
+### 2. Install Dependencies
 
-```bash
+\`\`\`bash
+npm install
+\`\`\`
+
+### 3. Configure Environment Variables
+
+Copy the example environment file:
+
+\`\`\`bash
 cp .env.example .env
-```
+\`\`\`
 
 Edit `.env` and configure:
-```env
+
+\`\`\`env
 # Database
-DATABASE_URL="mysql://vps_panel:your_password@db:3306/vps_panel"
+DATABASE_URL="postgresql://username:password@localhost:5432/vps_panel?schema=public"
 
-# Secrets (CHANGE THESE!)
-SESSION_SECRET=your-super-secret-session-key
-JWT_SECRET=your-super-secret-jwt-key
+# NextAuth
+NEXTAUTH_SECRET="your-super-secret-key-here-minimum-32-characters"
+NEXTAUTH_URL="http://localhost:3000"
 
-# Application
-NODE_ENV=production
-PORT=3000
-APP_URL=http://your-domain.com
-```
+# Encryption (for node credentials)
+ENCRYPTION_KEY="your-32-character-encryption-key-here-exactly-32-chars"
+\`\`\`
 
-### 3. Deploy with Docker
+**Important**: 
+- Replace database credentials with your PostgreSQL details
+- Generate a secure `NEXTAUTH_SECRET` (you can use: `openssl rand -base64 32`)
+- The `ENCRYPTION_KEY` must be exactly 32 characters
 
-```bash
-docker compose up -d
-```
+### 4. Set Up Database
 
-This will start:
-- MySQL database
-- Redis cache
-- VPS Panel application (runs migrations automatically)
+Run Prisma migrations:
 
-### 4. Create Admin User
+\`\`\`bash
+npm run prisma:generate
+npm run prisma:migrate
+\`\`\`
 
-```bash
-docker compose exec app npm run create-user
-```
+### 5. Create Admin Account
 
-Follow the prompts to create your first admin user.
+Use the CLI tool to create your first admin account:
 
-### 5. Access the Panel
+\`\`\`bash
+npm run create-admin
+\`\`\`
 
-Open your browser to `http://localhost:3000` (or your configured domain) and login with your admin credentials.
+Follow the prompts:
+- Enter name
+- Enter email
+- Enter password (minimum 8 characters)
+- Confirm admin status (yes/no)
 
-## 📚 Project Structure
+### 6. Start Development Server
 
-```
-vps-panel/
-├── src/
-│   ├── config/              # Configuration management
-│   ├── controllers/         # Route controllers
-│   │   ├── admin/           # Admin controllers
-│   │   ├── user/            # User controllers
-│   │   └── api/             # API controllers
-│   ├── middlewares/         # Express middlewares
-│   ├── routes/              # Route definitions
-│   ├── services/            # Business logic
-│   │   ├── proxmox.service.ts
-│   │   └── deployment.service.ts
-│   ├── lib/                 # Utilities and helpers
-│   ├── views/               # EJS templates
-│   └── public/              # Static assets
-├── prisma/
-│   └── schema.prisma        # Database schema
-├── scripts/
-│   └── create-user.ts       # CLI user creation
-├── docker-compose.yml
-├── Dockerfile
-└── package.json
-```
-
-## 🔧 Configuration
-
-### Proxmox Setup
-
-1. **Add a Node** via Admin Panel → Nodes
-2. Provide:
-   - Node name (must match Proxmox node name)
-   - Proxmox host/IP
-   - Port (default: 8006)
-   - Username (e.g., `root`)
-   - Password
-   - Realm (default: `pam`)
-
-3. The panel will test the connection and fetch live stats
-
-### IP Pool Setup
-
-1. Navigate to Admin Panel → IPAM
-2. Create an IP pool with:
-   - Name
-   - Location
-   - CIDR (e.g., `192.168.1.0/24`)
-   - Gateway
-   - Netmask
-   - DNS servers
-
-The system will automatically generate all IP addresses from the CIDR.
-
-### VPS Plans
-
-1. Navigate to Admin Panel → Plans
-2. Create a plan with:
-   - Name and description
-   - CPU cores
-   - RAM (MB)
-   - Disk (GB)
-   - Bandwidth (GB)
-   - Price per hour (optional)
-
-## 🔌 API Usage
-
-### Generate API Token
-
-1. Navigate to Admin Panel → API Tokens
-2. Generate a new token with required permissions:
-   - `create_vm`: Deploy servers
-   - `list_vm`: List servers
-   - `control_vm`: Power controls
-   - `delete_vm`: Delete servers
-
-### API Endpoints
-
-**Deploy Server:**
-```bash
-curl -X POST http://your-domain.com/api/servers/deploy \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": 1,
-    "plan_id": 1,
-    "os_template": "ubuntu-22.04",
-    "hostname": "server-001"
-  }'
-```
-
-**List Servers:**
-```bash
-curl http://your-domain.com/api/servers \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-**Control Server:**
-```bash
-curl -X POST http://your-domain.com/api/servers/1/power \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"action": "start"}'
-```
-
-## 🛠️ Development
-
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Run Database Migrations
-
-```bash
-npx prisma migrate dev
-```
-
-### Start Development Server
-
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
-### Build for Production
+The panel will be available at: `http://localhost:3000`
 
-```bash
+## Usage
+
+### Login
+
+1. Navigate to `http://localhost:3000`
+2. You'll be redirected to the login page
+3. Enter your credentials
+4. Admins will be routed to `/admin`
+5. Regular users will be routed to `/user`
+
+### Admin Tasks
+
+**Locations**: Create geographical locations for your infrastructure
+1. Go to Admin → Locations
+2. Click "Add Location"
+3. Fill in details (name, code, country, city)
+
+**Plans**: Create VPS hosting plans
+1. Go to Admin → Plans
+2. Click "Add Plan"
+3. Define resources (CPU, RAM, storage, bandwidth, price)
+
+**Nodes**: Add infrastructure nodes *(Note: credentials are encrypted)*
+1. Go to Admin → Nodes
+2. Provide SSH/API credentials
+3. Assign to a location
+
+**IP Management**: Manage IP address pools
+1. Go to Admin → IP Management
+2. Create IP pools with CIDR notation
+3. IPs are auto-assigned during VPS creation
+
+**Users**: Manage all users
+1. Go to Admin → Users
+2. View user details
+3. Promote/demote admin access
+
+**API Tokens**: Generate API tokens for external access
+1. Go to Admin → API Tokens
+2. Create token with specific permissions
+3. Use for automation/billing integration
+
+### User Tasks
+
+**View Servers**:
+1. Go to User → My Servers
+2. Click on any server to view details
+
+**Control VPS**:
+1. Open server details page
+2. Use power controls (Start, Stop, Restart)
+
+## Backend Integration
+
+**IMPORTANT**: This control panel includes placeholder functions for VPS management. You need to implement the actual backend integration based on your virtualization platform.
+
+Edit `lib/virtualization.ts` and implement:
+- `createVPS()` - Create VM in your backend
+- `startVPS()` - Start VM
+- `stopVPS()` - Stop VM
+- `restartVPS()` - Restart VM
+- `deleteVPS()` - Delete VM
+
+Supported backends (you'll need to add the SDK):
+- Proxmox VE
+- LibVirt/QEMU
+- VMware
+- OpenStack
+- Custom API
+
+## API Usage
+
+### Authentication
+
+All API requests require a Bearer token in the Authorization header:
+
+\`\`\`bash
+curl -H "Authorization: Bearer YOUR_API_TOKEN" \\
+  http://localhost:3000/api/servers
+\`\`\`
+
+### Endpoints
+
+- `GET /api/servers` - List servers
+- `POST /api/servers` - Create server
+- `POST /api/servers/{id}/power` - Control server power
+
+## Production Deployment
+
+### 1. Build the Application
+
+\`\`\`bash
 npm run build
-```
+\`\`\`
 
-## 🔒 Security Best Practices
+### 2. Start Production Server
 
-1. **Change Default Secrets**: Update `SESSION_SECRET` and `JWT_SECRET` in `.env`
-2. **Use HTTPS**: Deploy behind nginx with SSL/TLS
-3. **Secure Database**: Use strong passwords for MySQL
-4. **Firewall Rules**: Restrict access to Proxmox API and database ports
-5. **Regular Updates**: Keep dependencies updated
+\`\`\`bash
+npm start
+\`\`\`
 
-## 📝 Database Schema
+### 3. Environment Configuration
 
-The database includes models for:
-- **Users**: Authentication and role management
-- **Locations**: Data center locations
-- **Nodes**: Proxmox server nodes
-- **Servers**: Virtual machines
-- **Plans**: VPS resource packages
-- **IP Pools**: Network configuration
-- **IP Addresses**: Individual IPs with assignment tracking
-- **API Tokens**: External API access
+- Set `NODE_ENV=production`
+- Use a strong `NEXTAUTH_SECRET`
+- Use a production PostgreSQL database
+- Enable SSL for database connections
+- Set up reverse proxy (nginx/Apache)
 
-## 🐛 Troubleshooting
+### 4. Security Checklist
 
-### Cannot connect to Proxmox
-- Verify Proxmox credentials
-- Check firewall rules (port 8006)
-- Ensure SSL certificate is valid or disable SSL verification
+- [ ] Change all default secrets
+- [ ] Use HTTPS in production
+- [ ] Enable database SSL
+- [ ] Set up firewall rules
+- [ ] Regular backups
+- [ ] Monitor logs
 
-### Database connection failed
-- Verify `DATABASE_URL` in `.env`
-- Check if database container is running: `docker compose ps`
-- View logs: `docker compose logs db`
+## Scripts
 
-### Redis connection failed
-- Check if Redis container is running
-- Verify `REDIS_HOST` and `REDIS_PORT`
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run create-admin` - Create admin account (CLI)
+- `npm run prisma:generate` - Generate Prisma client
+- `npm run prisma:migrate` - Run database migrations
+- `npm run prisma:studio` - Open Prisma Studio (DB GUI)
 
-## 📄 License
+## Project Structure
 
-MIT
+\`\`\`
+vps-panel/
+├── app/                      # Next.js app directory
+│   ├── admin/               # Admin panel pages
+│   ├── user/                # User panel pages
+│   ├── api/                 # API routes
+│   └── login/               # Login page
+├── components/              # React components
+│   └── ui/                  # Reusable UI components
+├── lib/                     # Utility libraries
+│   ├── auth.ts             # NextAuth configuration
+│   ├── prisma.ts           # Prisma client
+│   ├── encryption.ts       # Credential encryption
+│   ├── virtualization.ts   # Backend integration (TODO)
+│   └── ip-manager.ts       # IP management logic
+├── prisma/                  # Database schema
+│   └── schema.prisma
+└── scripts/                 # CLI tools
+    └── create-admin.ts      # Admin creation tool
+\`\`\`
 
-## 🤝 Contributing
+## Troubleshooting
 
-Contributions are welcome! Please open an issue or submit a pull request.
+### Can't login as admin
+- Verify you created the account with `npm run create-admin`
+- Check `isAdmin` flag is `true` in database
+- Clear browser cookies and try again
 
----
+### Database connection errors
+- Verify PostgreSQL is running
+- Check `DATABASE_URL` in `.env`
+- Ensure database exists
 
-**Built with ❤️ for professional VPS hosting management**
+### Build errors
+- Run `npm install` again
+- Delete `node_modules` and `.next`, then reinstall
+
+## Future Enhancements
+
+- Console/VNC integration
+- Billing system integration
+- Automated backups
+- Resource usage graphs
+- Email notifications
+- Two-factor authentication
+- Audit logging
+
+## License
+
+Proprietary - All rights reserved
+
+## Support
+
+For issues and questions, please open an issue in the repository.

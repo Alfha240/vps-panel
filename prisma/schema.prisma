@@ -1,159 +1,507 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma Schema for VPS Hosting Control Panel
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String
-  name       String
-  is_admin   Boolean  @default(false)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  phone         String?
+  isAdmin       Boolean  @default(false)
+  balance       Float    @default(0)
+  
+  // Address
+  address       String?
+  city          String?
+  state         String?
+  country       String   @default("India")
+  pincode       String?
+  
+  // GST
+  gstin         String?
+  gstVerified   Boolean  @default(false)
+  
+  // KYC
+  kycStatus     String   @default("pending") // pending, approved, rejected
+  kycReason     String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  servers    Server[]
-  api_tokens ApiToken[]
+  servers           Server[]
+  balanceHistory    BalanceTransaction[]
+  paymentOrders     PaymentOrder[]
+  invoices          Invoice[]
+  payments          Payment[]
+  paymentMethods    PaymentMethod[]
+  kycDocuments      KYCDocument[]
+  supportTickets    SupportTicket[]
+  couponUsages      CouponUsage[]
 
+  @@index([email])
+  @@index([isAdmin])
   @@map("users")
 }
 
 model Location {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(cuid())
   name        String
-  description String?  @db.Text
-  country     String?
-  city        String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  code        String   @unique // e.g., "US-NY", "IN-MH"
+  country     String
+  city        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  nodes    Node[]
-  ip_pools IpPool[]
+  nodes       Node[]
+  ipPools     IpPool[]
 
+  @@index([code])
   @@map("locations")
 }
 
 model Node {
-  id                Int      @id @default(autoincrement())
+  id                String   @id @default(cuid())
   name              String
-  location_id       Int
-  proxmox_host      String
-  proxmox_port      Int      @default(8006)
-  proxmox_user      String
-  proxmox_password  String   // Consider encrypting this
-  proxmox_realm     String   @default("pam")
-  cpu_total         Int      @default(0)
-  cpu_used          Int      @default(0)
-  ram_total         BigInt   @default(0) // in MB
-  ram_used          BigInt   @default(0) // in MB
-  disk_total        BigInt   @default(0) // in GB
-  disk_used         BigInt   @default(0) // in GB
-  is_active         Boolean  @default(true)
-  maintenance_mode  Boolean  @default(false)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  hostname          String
+  ipAddress         String
+  port              Int      @default(22)
+  username          String
+  encryptedPassword String   // Encrypted SSH/API password
+  apiEndpoint       String?  // For Proxmox/LibVirt API
+  maxCpu            Int      // Total CPU cores
+  maxRam            Int      // Total RAM in MB
+  maxStorage        Int      // Total storage in GB
+  usedCpu           Int      @default(0)
+  usedRam           Int      @default(0)
+  usedStorage       Int      @default(0)
+  status            String   @default("online") // online, offline, maintenance
+  locationId        String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  location Location @relation(fields: [location_id], references: [id], onDelete: Cascade)
-  servers  Server[]
+  location          Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  servers           Server[]
+  ipPools           IpPool[]
 
+  @@index([locationId])
+  @@index([status])
   @@map("nodes")
 }
 
 model Plan {
-  id             Int      @id @default(autoincrement())
-  name           String
-  description    String?  @db.Text
-  cpu_cores      Int
-  ram_mb         Int
-  disk_gb        Int
-  bandwidth_gb   Int      @default(1000)
-  price_per_hour Decimal  @default(0.00) @db.Decimal(10, 2)
-  is_active      Boolean  @default(true)
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  cpu         Int      // CPU cores
+  ram         Int      // RAM in MB
+  storage     Int      // Storage in GB
+  bandwidth   Int      // Bandwidth in GB
+  price       Float    // Monthly price
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  servers Server[]
+  servers     Server[]
 
   @@map("plans")
 }
 
+model TemplateGroup {
+  id          String   @id @default(cuid())
+  name        String   @unique // Ubuntu, Debian, etc.
+  icon        String?  // Icon URL or emoji
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  templates   OSTemplate[]
+  
+  @@map("template_groups")
+}
+
+model OSTemplate {
+  id              String   @id @default(cuid())
+  groupId         String
+  name            String   // Ubuntu 22.04, Debian 12, etc.
+  version         String   // 22.04, 12, etc.
+  proxmoxTemplateId Int    // Proxmox VM template ID (e.g., 1002, 1003)
+  description     String?
+  icon            String?
+  isActive        Boolean  @default(true)
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  group           TemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  servers         Server[]
+  
+  @@index([groupId])
+  @@map("os_templates")
+}
+
 model Server {
-  id             Int      @id @default(autoincrement())
-  user_id        Int
-  node_id        Int
-  plan_id        Int
-  ip_address_id  Int?     @unique
-  name           String
-  proxmox_vmid   Int
-  status         String   @default("installing") // installing, active, suspended, stopped
-  cpu            Int
-  ram            Int      // in MB
-  disk           Int      // in GB
-  os_template    String
-  root_password  String   // Consider encrypting this
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  hostname    String   @unique
+  status      String   @default("pending") // pending, running, stopped, suspended, deleted
+  osType      String   // ubuntu-22.04, debian-12, etc.
+  osVersion   String?
+  vmId        String?  // VM ID in backend (Proxmox, LibVirt, etc.)
+  cpu         Int
+  ram         Int
+  storage     Int
+  userId      String
+  nodeId      String
+  planId      String
+  templateId  String?  // OS Template used for creation
+  isSuspended Boolean  @default(false)
+  
+  // Billing
+  renewalDate DateTime?
+  autoRenew   Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user       User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  node       Node        @relation(fields: [node_id], references: [id])
-  plan       Plan        @relation(fields: [plan_id], references: [id])
-  ip_address IpAddress?  @relation(fields: [ip_address_id], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  node         Node          @relation(fields: [nodeId], references: [id], onDelete: Restrict)
+  plan         Plan          @relation(fields: [planId], references: [id], onDelete: Restrict)
+  template     OSTemplate?   @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  ipAddresses  IpAddress[]
+  usageMetrics UsageMetric[]
 
+  @@index([userId])
+  @@index([nodeId])
+  @@index([status])
+  @@index([templateId])
   @@map("servers")
 }
 
 model IpPool {
-  id           Int      @id @default(autoincrement())
-  name         String
-  location_id  Int
-  cidr         String
-  gateway      String
-  netmask      String
-  dns_servers  String   @default("8.8.8.8,8.8.4.4")
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String   // Custom pool name (e.g., "Main Pool", "VPS Pool 1")
+  cidr       String   // e.g., 192.168.1.0/24
+  gateway    String
+  locationId String
+  nodeId     String?  // Optional - specific node for this pool
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  location     Location    @relation(fields: [location_id], references: [id], onDelete: Cascade)
-  ip_addresses IpAddress[]
+  location    Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  node        Node?       @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+  ipAddresses IpAddress[]
 
+  @@index([locationId])
+  @@index([nodeId])
   @@map("ip_pools")
 }
 
 model IpAddress {
-  id          Int       @id @default(autoincrement())
-  ip_pool_id  Int
-  address     String    @unique
-  is_assigned Boolean   @default(false)
-  assigned_at DateTime?
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  address     String   @unique
+  poolId      String
+  serverId    String?
+  isAssigned  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  ip_pool IpPool  @relation(fields: [ip_pool_id], references: [id], onDelete: Cascade)
-  server  Server?
+  pool        IpPool   @relation(fields: [poolId], references: [id], onDelete: Cascade)
+  server      Server?  @relation(fields: [serverId], references: [id], onDelete: SetNull)
 
+  @@index([poolId])
+  @@index([serverId])
+  @@index([isAssigned])
   @@map("ip_addresses")
 }
 
 model ApiToken {
-  id           Int       @id @default(autoincrement())
-  user_id      Int?
-  name         String
-  token        String    @unique
-  permissions  String    @db.Text // JSON array: ["create_vm", "delete_vm", etc.]
-  expires_at   DateTime?
-  last_used_at DateTime?
-  is_active    Boolean   @default(true)
-  created_at   DateTime  @default(now())
-  updated_at   DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  token       String   @unique
+  permissions String   // JSON string: "[\"create_vps\", \"manage_vps\", \"read_only\"]"
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user User? @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
+  @@index([token])
+  @@index([isActive])
   @@map("api_tokens")
+}
+
+model BalanceTransaction {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount        Float
+  type          String   // "credit" or "debit"
+  description   String
+  balanceBefore Float
+  balanceAfter  Float
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("balance_transactions")
+}
+
+model PaymentOrder {
+  id              String   @id @default(cuid())
+  userId          String
+  gateway         String   // "razorpay" or "cashfree"
+  orderId         String   @unique // Gateway order ID
+  amount          Float    // Amount in rupees
+  coins           Float    // Coins to be credited
+  status          String   @default("pending") // pending, success, failed
+  paymentId       String?  // Gateway payment ID after success
+  metadata        String?  // JSON for gateway response
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([orderId])
+  @@index([status])
+  @@map("payment_orders")
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  invoiceNumber   String   @unique // INV-2024-0001
+  userId          String
+  
+  // Amounts
+  subtotal        Float
+  taxAmount       Float
+  discountAmount  Float    @default(0)
+  totalAmount     Float
+  
+  // Tax breakdown (GST)
+  cgst            Float    @default(0)
+  sgst            Float    @default(0)
+  igst            Float    @default(0)
+  
+  // Status
+  status          String   @default("unpaid") // unpaid, paid, cancelled, refunded
+  dueDate         DateTime
+  paidAt          DateTime?
+  
+  // Metadata
+  notes           String?
+  metadata        String?  // JSON
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items           InvoiceItem[]
+  payments        Payment[]
+  
+  @@index([userId])
+  @@index([invoiceNumber])
+  @@index([status])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Float
+  amount      Float
+  
+  serverId    String?
+  planId      String?
+  
+  createdAt   DateTime @default(now())
+  
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  invoiceId         String?
+  userId            String
+  
+  amount            Float
+  gateway           String   // razorpay, cashfree, manual
+  gatewayOrderId    String?
+  gatewayPaymentId  String?
+  
+  status            String   @default("pending") // pending, success, failed, refunded
+  
+  metadata          String?  // JSON
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoice           Invoice? @relation(fields: [invoiceId], references: [id])
+  
+  @@index([userId])
+  @@index([invoiceId])
+  @@index([status])
+  @@map("payments")
+}
+
+model Coupon {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  
+  type        String   // percentage, fixed
+  value       Float
+  
+  minAmount   Float    @default(0)
+  maxDiscount Float?
+  
+  usageLimit  Int?
+  usageCount  Int      @default(0)
+  
+  validFrom   DateTime
+  validUntil  DateTime?
+  
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  usages      CouponUsage[]
+  
+  @@index([code])
+  @@index([isActive])
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id        String   @id @default(cuid())
+  couponId  String
+  userId    String
+  
+  discount  Float
+  
+  createdAt DateTime @default(now())
+  
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([couponId])
+  @@map("coupon_usages")
+}
+
+model PaymentMethod {
+  id          String   @id @default(cuid())
+  userId      String
+  
+  type        String   // card, upi, netbanking
+  provider    String   // razorpay, cashfree
+  
+  details     String   // JSON encrypted
+  
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+model KYCDocument {
+  id          String   @id @default(cuid())
+  userId      String
+  
+  type        String   // aadhaar, pan, address_proof
+  fileUrl     String
+  
+  status      String   @default("pending") // pending, approved, rejected
+  remarks     String?
+  
+  uploadedAt  DateTime @default(now())
+  verifiedAt  DateTime?
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@map("kyc_documents")
+}
+
+model UsageMetric {
+  id          String   @id @default(cuid())
+  serverId    String
+  
+  metricType  String   // cpu, ram, disk, bandwidth
+  value       Float
+  unit        String   // hours, GB, etc
+  
+  cost        Float    @default(0)
+  
+  startTime   DateTime
+  endTime     DateTime
+  
+  createdAt   DateTime @default(now())
+  
+  server      Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  
+  @@index([serverId])
+  @@index([metricType])
+  @@index([startTime])
+  @@map("usage_metrics")
+}
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  userId      String
+  ticketNumber String  @unique
+  
+  subject     String
+  category    String   // billing, technical, refund
+  priority    String   @default("medium") // low, medium, high
+  status      String   @default("open") // open, replied, closed
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    TicketMessage[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([ticketNumber])
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  
+  message   String
+  isAdmin   Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  @@index([ticketId])
+  @@map("ticket_messages")
 }
